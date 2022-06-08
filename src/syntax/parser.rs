@@ -32,7 +32,7 @@ impl<'a> Parser<'a> {
         let initializer = if self.match_(TokenType::Equal)? {
             self.parse_expr_statement()?
         } else {
-            self.expect(TokenType::Line)?;
+            self.expect(TokenType::Semicolon)?;
             Expr::number(4.0) // TODO: NIL.
             // Expr::Literal(LiteralExpr::Nil)
         };
@@ -49,7 +49,7 @@ impl<'a> Parser<'a> {
         let args = self.parse_args()?;
         self.expect(TokenType::RightParen)?;
 
-        self.expect(TokenType::Line)?;
+        self.expect(TokenType::Semicolon)?;
 
         let body = self.block()?;
         let fun_decl = FunDecl::new(args, body);
@@ -59,7 +59,7 @@ impl<'a> Parser<'a> {
 
     fn parse_do(&mut self) -> ParseResult<Expr> {
         self.expect(TokenType::Do)?;
-        self.match_(TokenType::Line)?;
+        self.match_(TokenType::Semicolon)?;
         Ok(Expr::Block(self.block()?))
     }
 
@@ -76,7 +76,7 @@ impl<'a> Parser<'a> {
         let cond = self.expression()?;
 
         self.expect(TokenType::Do)?;
-        self.match_(TokenType::Line)?;
+        self.match_(TokenType::Semicolon)?;
 
         // Then
         let mut then = vec![];
@@ -92,13 +92,13 @@ impl<'a> Parser<'a> {
         }
 
         let else_clause = if self.match_(TokenType::Else)? {
-            self.match_(TokenType::Line)?;
+            self.match_(TokenType::Semicolon)?;
             Some(self.block()?)
         } else {
             None
         };
 
-        self.match_(TokenType::Line)?;
+        self.match_(TokenType::Semicolon)?;
 
         Ok(Expr::if_else(cond, then, else_clause))
     }
@@ -117,7 +117,7 @@ impl<'a> Parser<'a> {
 
     pub fn parse_expr_statement(&mut self) -> ParseResult<Expr> {
         let expr = self.expression()?;
-        self.match_(TokenType::Line)?;
+        self.match_(TokenType::Semicolon)?;
         Ok(expr)
     }
 
@@ -131,7 +131,7 @@ impl<'a> Parser<'a> {
             exprs.push(self.parse_top_level_expr()?);
         }
 
-        self.match_(TokenType::Line)?;
+        self.match_(TokenType::Semicolon)?;
 
         Ok(exprs)
     }

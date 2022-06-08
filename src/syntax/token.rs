@@ -54,7 +54,6 @@ pub enum TokenType {
     Def,
     Identifier,
 
-    Line,
     EOF,
 }
 
@@ -78,7 +77,8 @@ pub trait ToKeyword {
 
 impl ToKeyword for &str {
     fn to_keyword(self) -> TokenType {
-        return match self {
+        match self {
+            "let" => TokenType::Let,
             _ => TokenType::Identifier,
         }
     }

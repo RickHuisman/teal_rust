@@ -9,7 +9,7 @@ mod lexer;
 mod parser;
 mod expr_parser;
 mod error;
-mod ast;
+pub mod ast;
 
 pub fn parse<'a>(tokens: &'a mut Vec<Token<'a>>) -> ParseResult<Program> {
     let mut parser = Parser::new(tokens);

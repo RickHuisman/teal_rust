@@ -82,7 +82,7 @@ impl<'a> Lexer<'a> {
                     TokenType::Equal
                 }
             }
-            ';' | '\n' | '\r' => TokenType::Line,
+            ';' => TokenType::Semicolon,
             '"' => return self.string(start),
             _ => {
                 return Err(SyntaxError::UnexpectedChar);
@@ -159,7 +159,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn skip_whitespace(&mut self) -> LexResult<()> {
-        self.advance_while(|&c| c == ' ' || c == '\t')?;
+        self.advance_while(|&c| c == ' ' || c == '\t' || c == '\n' || c == '\r')?;
         Ok(())
     }
 
