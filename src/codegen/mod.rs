@@ -40,15 +40,16 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
 
             let s = Statement::String(format!("global.set ${}", ident.clone()));
             compiler.current_function.add_statement(s);
-            // let s2 = Statement::String(format!("global.get ${}", ident.clone()));
-            // compiler.current_function.add_statement(s2);
         },
         Expr::LetGet { ident } => {
-            let s2 = Statement::String(format!("global.get ${}", ident.clone()));
-            compiler.current_function.add_statement(s2);
-
+            let s = Statement::String(format!("global.get ${}", ident.clone()));
+            compiler.current_function.add_statement(s);
         },
-        Expr::LetSet { .. } => todo!(),
+        Expr::LetSet { ident, expr } => {
+            generate_expr(compiler, *expr);
+            let s = Statement::String(format!("global.set ${}", ident));
+            compiler.current_function.add_statement(s);
+        },
         Expr::Puts { .. } => todo!(),
         Expr::IfElse { .. } => todo!(),
         Expr::Def { .. } => todo!(),

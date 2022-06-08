@@ -12,7 +12,10 @@ use crate::syntax::{lex, parse};
 fn main() -> Result<()> {
     let code = r#"
     let x = 10;
-    x * x + 2;
+    x = 2;
+    let y = 4;
+    y = 2;
+    x + y + 2;
     "#;
     run(code)
 }
