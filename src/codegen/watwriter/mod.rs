@@ -65,8 +65,8 @@ pub type FunctionName = String;
 #[derive(Clone)]
 pub enum Statement {
     Const(f64),
-    String(String),
     Call(FunctionName),
+    String(String),
 }
 
 impl Statement {
@@ -81,8 +81,14 @@ impl Statement {
             Statement::Call(f) => {
                 format!("call ${}\n", f)
             }
-        }
+        };
     }
+}
+
+#[derive(Clone, PartialEq)]
+pub enum FunctionType {
+    Function,
+    Script,
 }
 
 #[derive(Clone)]
@@ -90,16 +96,23 @@ pub struct Function {
     name: String,
     params: Vec<Identifier>,
     return_type: Option<ValueType>,
+    locals: Vec<Identifier>,
     statements: Vec<Statement>,
+    pub function_type: FunctionType,
 }
 
 impl Function {
-    pub fn new(name: String, params: Vec<Identifier>, return_type: Option<ValueType>, statements: Vec<Statement>) -> Self {
-        Self { name, params, return_type, statements }
+    pub fn new(
+        name: String,
+        params: Vec<Identifier>,
+        return_type: Option<ValueType>,
+        statements: Vec<Statement>,
+        function_type: FunctionType) -> Self {
+        Self { name, params, return_type, locals: vec![], statements, function_type }
     }
 
-    pub fn new_empty(name: &str) -> Self {
-        Self { name: name.to_string(), params: vec![], return_type: None, statements: vec![] }
+    pub fn add_local(&mut self, local: Identifier) {
+        self.locals.push(local);
     }
 
     pub fn add_statement(&mut self, statement: Statement) {
@@ -120,6 +133,11 @@ impl Function {
         // Return type.
         if self.return_type.is_some() {
             prefix += "(result f64)\n";
+        }
+
+        // Local declarations.
+        for l in self.locals {
+            prefix += &format!("(local ${} f64)\n", l);
         }
 
         // Statements.

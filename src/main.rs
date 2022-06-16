@@ -20,10 +20,14 @@ fn main() -> Result<()> {
 
     let code = r#"
     fun sum(a, b) {
-        a + b;
+        let x = 10;
+        x = 3;
+        a + b + x;
     }
 
-    sum(4, 5) + 2;
+    let f = 3;
+
+    sum(f, 5) + 2;
     "#;
     run(code)
 }
