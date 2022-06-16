@@ -78,6 +78,7 @@ pub trait ToKeyword {
 impl ToKeyword for &str {
     fn to_keyword(self) -> TokenType {
         match self {
+            "fun" => TokenType::Def,
             "let" => TokenType::Let,
             _ => TokenType::Identifier,
         }

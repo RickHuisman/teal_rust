@@ -1,3 +1,4 @@
+#[derive(Clone)]
 pub struct Module {
     pub globals: Vec<Global>,
     pub functions: Vec<Function>,
@@ -33,6 +34,7 @@ impl Module {
     }
 }
 
+#[derive(Clone)]
 pub enum ValueType {
     I32,
     I64,
@@ -40,6 +42,7 @@ pub enum ValueType {
     F64,
 }
 
+#[derive(Clone)]
 pub struct Global {
     pub name: String,
     pub mutable: bool,
@@ -52,6 +55,7 @@ impl Global {
     }
 }
 
+#[derive(Clone)]
 pub enum Statement {
     Const(f64),
     String(String),
@@ -70,6 +74,7 @@ impl Statement {
     }
 }
 
+#[derive(Clone)]
 pub struct Function {
     name: String,
     return_type: Option<ValueType>,
@@ -77,8 +82,8 @@ pub struct Function {
 }
 
 impl Function {
-    pub fn new(name: &str, return_type: Option<ValueType>, statements: Vec<Statement>) -> Self {
-        Self { name: name.to_string(), return_type, statements }
+    pub fn new(name: String, return_type: Option<ValueType>, statements: Vec<Statement>) -> Self {
+        Self { name, return_type, statements }
     }
 
     pub fn new_empty(name: &str) -> Self {
@@ -107,7 +112,7 @@ impl Function {
 
         prefix += ")";
 
-        prefix += r#"(export "init" (func $init))"#;
+        prefix += &format!("(export \"{}\" (func ${}))", self.name, self.name);
 
         prefix.to_string()
     }

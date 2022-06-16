@@ -4,14 +4,19 @@ use crate::codegen::watwriter::{Function, Global, Module, Statement, ValueType};
 use crate::syntax::ast::{BinaryOperator, Expr, LiteralExpr, Program};
 
 pub fn generate_assembly(program: Program) -> String {
+    let init_fun = Function::new("init".to_string(), Some(ValueType::F64), vec![]);
+
     let mut compiler = Compiler {
         module: Module::new(),
-        current_function: Function::new("init", Some(ValueType::F64), vec![]),
+        current: init_fun,
     };
 
     for expr in program {
         generate_expr(&mut compiler, expr);
     }
+
+    // Add init function.
+    compiler.module.add_function(compiler.current.clone());
 
     compiler.to_wat()
 }
@@ -39,25 +44,41 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
             generate_expr(compiler, *initializer);
 
             let s = Statement::String(format!("global.set ${}", ident.clone()));
-            compiler.current_function.add_statement(s);
+            compiler.current.add_statement(s);
         },
         Expr::LetGet { ident } => {
             let s = Statement::String(format!("global.get ${}", ident.clone()));
-            compiler.current_function.add_statement(s);
+            compiler.current.add_statement(s);
         },
         Expr::LetSet { ident, expr } => {
             generate_expr(compiler, *expr);
             let s = Statement::String(format!("global.set ${}", ident));
-            compiler.current_function.add_statement(s);
+            compiler.current.add_statement(s);
         },
         Expr::Puts { .. } => todo!(),
         Expr::IfElse { .. } => todo!(),
-        Expr::Def { .. } => todo!(),
-        Expr::Call { .. } => todo!(),
+        Expr::Def { ident, decl } => {
+            let init_clone = compiler.current.clone();
+
+            let f = Function::new(ident, Some(ValueType::F64), vec![]);
+            compiler.current = f;
+
+            // Compile function expressions.
+            for expr in decl.body {
+                generate_expr(compiler, expr);
+            }
+
+            compiler.module.add_function(compiler.current.clone());
+
+            compiler.current = init_clone;
+        },
+        Expr::Call { callee, args } => {
+
+        },
         Expr::Literal(l) => {
             match l {
                 LiteralExpr::Number(n) => {
-                    compiler.current_function.add_statement(Statement::Const(n));
+                    compiler.current.add_statement(Statement::Const(n));
                 }
                 _ => todo!()
             }
@@ -74,18 +95,18 @@ fn generate_binary_op(compiler: &mut Compiler, op: BinaryOperator) {
         _ => todo!(),
     }.to_string();
 
-    compiler.current_function.add_statement(Statement::String(operator));
+    compiler.current.add_statement(Statement::String(operator));
 }
 
+#[derive(Clone)]
 struct Compiler {
     module: Module,
-    current_function: Function,
+    current: Function,
 }
 
 impl Compiler {
     pub fn to_wat(mut self) -> String {
-        self.module.add_function(self.current_function);
-
+        // self.module.add_function(self.current_function);
         self.module.to_wat()
     }
 }

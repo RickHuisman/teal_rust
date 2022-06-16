@@ -10,12 +10,20 @@ use crate::codegen::generate_assembly;
 use crate::syntax::{lex, parse};
 
 fn main() -> Result<()> {
+    // let code = r#"
+    // let x = 10;
+    // x = 2;
+    // let y = 4;
+    // y = 2;
+    // x + y + 2;
+    // "#;
+
     let code = r#"
-    let x = 10;
-    x = 2;
-    let y = 4;
-    y = 2;
-    x + y + 2;
+    fun foobar() {
+        2 + 3;
+    }
+
+    2 + 2;
     "#;
     run(code)
 }
@@ -36,8 +44,8 @@ fn run(source: &str) -> Result<()> {
     let import_object = imports! {};
     let instance = Instance::new(&module, &import_object)?;
 
-    let add_one = instance.exports.get_function("init")?;
-    let result = add_one.call(&[])?;
+    let init = instance.exports.get_function("init")?;
+    let result = init.call(&[])?;
     println!("{:?}", result);
 
     Ok(())

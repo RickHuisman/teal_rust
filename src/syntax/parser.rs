@@ -49,11 +49,11 @@ impl<'a> Parser<'a> {
         let args = self.parse_args()?;
         self.expect(TokenType::RightParen)?;
 
-        self.expect(TokenType::Semicolon)?;
+        self.expect(TokenType::LeftBrace)?;
 
         let body = self.block()?;
-        let fun_decl = FunDecl::new(args, body);
 
+        let fun_decl = FunDecl::new(args, body);
         Ok(Expr::def(ident, fun_decl))
     }
 
@@ -127,11 +127,9 @@ impl<'a> Parser<'a> {
 
     fn block(&mut self) -> ParseResult<BlockDecl> {
         let mut exprs = vec![];
-        while !self.match_(TokenType::End)? {
+        while !self.match_(TokenType::RightBrace)? && !self.match_(TokenType::End)? {
             exprs.push(self.parse_top_level_expr()?);
         }
-
-        self.match_(TokenType::Semicolon)?;
 
         Ok(exprs)
     }
