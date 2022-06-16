@@ -51,12 +51,12 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
             };
         }
         Expr::LetGet { ident } => {
-            let s = if compiler.current.function_type == FunctionType::Script {
-                // Global var.
-                Statement::String(format!("global.get ${}", ident.clone()))
-            } else {
+            let s = if compiler.is_local(&ident) {
                 // Local var.
                 Statement::String(format!("local.get ${}", ident.clone()))
+            } else {
+                // Global var.
+                Statement::String(format!("global.get ${}", ident.clone()))
             };
 
             compiler.current.add_statement(s);
@@ -64,12 +64,12 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
         Expr::LetSet { ident, expr } => {
             generate_expr(compiler, *expr);
 
-            let s = if compiler.current.function_type == FunctionType::Script {
-                // Global var.
-                Statement::String(format!("global.set ${}", ident.clone()))
-            } else {
+            let s = if compiler.is_local(&ident) {
                 // Local var.
                 Statement::String(format!("local.set ${}", ident.clone()))
+            } else {
+                // Global var.
+                Statement::String(format!("global.set ${}", ident.clone()))
             };
 
             compiler.current.add_statement(s);
@@ -143,6 +143,14 @@ impl Compiler {
             globals: vec![],
             current: init_fun,
         }
+    }
+
+    pub fn is_local(&self, local: &Identifier) -> bool {
+        if self.current.params.contains(local) {
+            return true;
+        }
+
+        self.current.locals.contains(local)
     }
 
     pub fn to_wat(mut self) -> String {

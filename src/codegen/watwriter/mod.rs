@@ -94,9 +94,9 @@ pub enum FunctionType {
 #[derive(Clone)]
 pub struct Function {
     name: String,
-    params: Vec<Identifier>,
+    pub params: Vec<Identifier>,
     return_type: Option<ValueType>,
-    locals: Vec<Identifier>,
+    pub locals: Vec<Identifier>,
     statements: Vec<Statement>,
     pub function_type: FunctionType,
 }

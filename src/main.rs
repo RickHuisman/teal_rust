@@ -10,38 +10,30 @@ use crate::codegen::generate_assembly;
 use crate::syntax::{lex, parse};
 
 fn main() -> Result<()> {
-    // let code = r#"
-    // let x = 10;
-    // x = 2;
-    // let y = 4;
-    // y = 2;
-    // x + y + 2;
-    // "#;
-
     let code = r#"
     fun sum(a, b) {
-        let x = 10;
-        x = 3;
-        a + b + x;
+        f = 4;
+        a + b + f;
     }
 
-    let f = 3;
-
-    sum(f, 5) + 2;
+    let f = 2;
+    sum(f, 5);
     "#;
     run(code)
 }
 
 fn run(source: &str) -> Result<()> {
+    // Compile program.
     let mut tokens = lex(source).unwrap();
     let ast = parse(&mut tokens).unwrap();
 
     println!("{:?}", ast);
 
+    // Generate wasm.
     let module_wat = generate_assembly(ast);
     println!("{}", module_wat);
 
-    // Run wasmer.
+    // Run wasm.
     let store = Store::default();
     let module = Module::new(&store, &module_wat)?;
 
