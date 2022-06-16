@@ -4,12 +4,7 @@ use crate::codegen::watwriter::{Function, Global, Module, Statement, ValueType};
 use crate::syntax::ast::{BinaryOperator, Expr, LiteralExpr, Program};
 
 pub fn generate_assembly(program: Program) -> String {
-    let init_fun = Function::new("init".to_string(), Some(ValueType::F64), vec![]);
-
-    let mut compiler = Compiler {
-        module: Module::new(),
-        current: init_fun,
-    };
+    let mut compiler = Compiler::new();
 
     for expr in program {
         generate_expr(&mut compiler, expr);
@@ -47,7 +42,8 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
             compiler.current.add_statement(s);
         },
         Expr::LetGet { ident } => {
-            let s = Statement::String(format!("global.get ${}", ident.clone()));
+            // let s = Statement::String(format!("global.get ${}", ident.clone()));
+            let s = Statement::String(format!("local.get ${}", ident.clone()));
             compiler.current.add_statement(s);
         },
         Expr::LetSet { ident, expr } => {
@@ -60,7 +56,7 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
         Expr::Def { ident, decl } => {
             let init_clone = compiler.current.clone();
 
-            let f = Function::new(ident, Some(ValueType::F64), vec![]);
+            let f = Function::new(ident, decl.args, Some(ValueType::F64), vec![]);
             compiler.current = f;
 
             // Compile function expressions.
@@ -73,7 +69,18 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
             compiler.current = init_clone;
         },
         Expr::Call { callee, args } => {
+            // Generate args.
+            for a in args {
+                generate_expr(compiler, a);
+            }
 
+            let fun_name = match *callee {
+                Expr::LetGet { ident } => ident,
+                _ => todo!()
+            };
+
+            let call = Statement::Call(fun_name);
+            compiler.current.add_statement(call);
         },
         Expr::Literal(l) => {
             match l {
@@ -105,8 +112,15 @@ struct Compiler {
 }
 
 impl Compiler {
+    pub fn new() -> Self {
+        let init_fun = Function::new("init".to_string(), vec![], Some(ValueType::F64), vec![]);
+        Self {
+            module: Module::new(),
+            current: init_fun,
+        }
+    }
+
     pub fn to_wat(mut self) -> String {
-        // self.module.add_function(self.current_function);
         self.module.to_wat()
     }
 }

@@ -2,7 +2,7 @@ mod syntax;
 mod codegen;
 
 use anyhow::Result;
-use wasmer::{Instance, Store};
+use wasmer::{Function, Instance, Store};
 use wasmer::Module;
 use wasmer::imports;
 use wasmer::Value;
@@ -19,11 +19,11 @@ fn main() -> Result<()> {
     // "#;
 
     let code = r#"
-    fun foobar() {
-        2 + 3;
+    fun sum(a, b) {
+        a + b;
     }
 
-    2 + 2;
+    sum(4, 5) + 2;
     "#;
     run(code)
 }

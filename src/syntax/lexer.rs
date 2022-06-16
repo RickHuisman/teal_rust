@@ -231,7 +231,6 @@ mod tests {
             Token::new(Number, "2", Position::new(0, 1, 1)),
             Token::new(Number, "10", Position::new(2, 4, 1)),
             Token::new(Number, "3.33", Position::new(5, 9, 1)),
-            Token::new(Line, "", Position::new(9, 9, 1)),
             Token::new(EOF, "", Position::new(9, 9, 1)),
         ];
 
@@ -247,7 +246,6 @@ mod tests {
             Token::new(String, "Hello", Position::new(1, 6, 1)),
             Token::new(String, ",", Position::new(9, 10, 1)),
             Token::new(String, "World!", Position::new(13, 19, 1)),
-            Token::new(Line, "", Position::new(20, 20, 1)),
             Token::new(EOF, "", Position::new(20, 20, 1)),
         ];
 
@@ -261,7 +259,6 @@ mod tests {
     fn lex_comments() {
         let expect = vec![
             Token::new(Number, "2", Position::new(0, 1, 1)),
-            Token::new(Line, "", Position::new(34, 34, 1)),
             Token::new(EOF, "", Position::new(34, 34, 1)),
         ];
 

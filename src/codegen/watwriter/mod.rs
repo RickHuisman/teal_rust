@@ -1,3 +1,5 @@
+use crate::syntax::ast::Identifier;
+
 #[derive(Clone)]
 pub struct Module {
     pub globals: Vec<Global>,
@@ -18,7 +20,7 @@ impl Module {
     }
 
     pub fn to_wat(self) -> String {
-        let mut prefix = "(module ".to_string();
+        let mut prefix = "(module\n".to_string();
 
         // Globals.
         for g in self.globals {
@@ -29,6 +31,9 @@ impl Module {
         for f in self.functions {
             prefix += &f.to_wat();
         }
+
+        // Export init function.
+        prefix += &format!("(export \"init\" (func $init))\n");
 
         prefix + ")"
     }
@@ -55,10 +60,13 @@ impl Global {
     }
 }
 
+pub type FunctionName = String;
+
 #[derive(Clone)]
 pub enum Statement {
     Const(f64),
     String(String),
+    Call(FunctionName),
 }
 
 impl Statement {
@@ -70,6 +78,9 @@ impl Statement {
             Statement::String(s) => {
                 format!("{}\n", s)
             }
+            Statement::Call(f) => {
+                format!("call ${}\n", f)
+            }
         }
     }
 }
@@ -77,17 +88,18 @@ impl Statement {
 #[derive(Clone)]
 pub struct Function {
     name: String,
+    params: Vec<Identifier>,
     return_type: Option<ValueType>,
     statements: Vec<Statement>,
 }
 
 impl Function {
-    pub fn new(name: String, return_type: Option<ValueType>, statements: Vec<Statement>) -> Self {
-        Self { name, return_type, statements }
+    pub fn new(name: String, params: Vec<Identifier>, return_type: Option<ValueType>, statements: Vec<Statement>) -> Self {
+        Self { name, params, return_type, statements }
     }
 
     pub fn new_empty(name: &str) -> Self {
-        Self { name: name.to_string(), return_type: None, statements: vec![] }
+        Self { name: name.to_string(), params: vec![], return_type: None, statements: vec![] }
     }
 
     pub fn add_statement(&mut self, statement: Statement) {
@@ -97,12 +109,17 @@ impl Function {
     pub fn to_wat(self) -> String {
         let mut prefix = "(func ".to_string();
 
-        // Export.
-        prefix += &format!("${}\n", self.name);
+        prefix += &format!("${} ", self.name);
+
+        // Params.
+        for p in self.params {
+            prefix += &format!("(param ${} f64) ", p);
+        }
+        prefix += "\n";
 
         // Return type.
         if self.return_type.is_some() {
-            prefix += " (result f64)\n";
+            prefix += "(result f64)\n";
         }
 
         // Statements.
@@ -110,10 +127,25 @@ impl Function {
             prefix += &s.to_wat();
         }
 
-        prefix += ")";
-
-        prefix += &format!("(export \"{}\" (func ${}))", self.name, self.name);
+        prefix += ")\n";
 
         prefix.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn module_to_wat() {
+        let m = Module::new();
+        assert_eq!(m.to_wat(), "(module)");
+    }
+
+    #[test]
+    fn fun_to_wat() {
+        let f = Function::new_empty("foobar");
+        assert_eq!(f.to_wat(), "(func $foobar)");
     }
 }
