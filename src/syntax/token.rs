@@ -80,6 +80,7 @@ impl ToKeyword for &str {
         match self {
             "fun" => TokenType::Def,
             "let" => TokenType::Let,
+            "puts" => TokenType::Puts,
             _ => TokenType::Identifier,
         }
     }

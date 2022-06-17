@@ -22,6 +22,9 @@ impl Module {
     pub fn to_wat(self) -> String {
         let mut prefix = "(module\n".to_string();
 
+        // Print function.
+        prefix += "(import \"env\" \"log\" (func $log (param f64)))\n";
+
         // Globals.
         for g in self.globals {
             prefix += &g.to_wat();

@@ -24,7 +24,7 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
         Expr::LetAssign { ident, initializer } => generate_let_assign(compiler, ident, initializer),
         Expr::LetGet { ident } => generate_let_get(compiler, ident),
         Expr::LetSet { ident, expr } => generate_let_set(compiler, ident, expr),
-        Expr::Puts { .. } => todo!(),
+        Expr::Puts { value } => generate_puts(compiler, value),
         Expr::IfElse { .. } => todo!(),
         Expr::Def { ident, decl } => generate_fun(compiler, ident, decl),
         Expr::Call { callee, args } => generate_call(compiler, callee, args),
@@ -79,6 +79,14 @@ fn generate_let_set(compiler: &mut Compiler, ident: Identifier, expr: Box<Expr>)
         // Global var.
         Statement::String(format!("global.set ${}", ident.clone()))
     };
+
+    compiler.current.add_statement(s);
+}
+
+fn generate_puts(compiler: &mut Compiler, value: Box<Expr>) {
+    generate_expr(compiler, *value);
+
+    let s = Statement::String("call $log".to_string());
 
     compiler.current.add_statement(s);
 }

@@ -2,9 +2,10 @@ mod syntax;
 mod codegen;
 
 use anyhow::Result;
-use wasmer::{Function, Instance, Store};
+use wasmer::{Exports, Function, ImportObject, Instance, Store};
 use wasmer::Module;
 use wasmer::imports;
+use wasmer::internals::WithoutEnv;
 use wasmer::Value;
 use crate::codegen::generate_assembly;
 use crate::syntax::{lex, parse};
@@ -15,7 +16,8 @@ fn main() -> Result<()> {
         -x;
     }
 
-    negate(3);
+    puts negate(3);
+    5;
     "#;
     run(code)
 }
@@ -35,7 +37,14 @@ fn run(source: &str) -> Result<()> {
     let store = Store::default();
     let module = Module::new(&store, &module_wat)?;
 
-    let import_object = imports! {};
+    let log_func = Function::new_native(&store, log);
+
+    let import_object = imports! {
+        "env" => {
+            "log" => log_func
+        }
+    };
+
     let instance = Instance::new(&module, &import_object)?;
 
     let main = instance.exports.get_function("main")?;
@@ -43,4 +52,8 @@ fn run(source: &str) -> Result<()> {
     println!("{:?}", result);
 
     Ok(())
+}
+
+fn log(n: f64) {
+    println!("{}", n);
 }
