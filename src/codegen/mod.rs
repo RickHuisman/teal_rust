@@ -129,11 +129,14 @@ fn generate_binary_op(compiler: &mut Compiler, op: BinaryOperator) {
     let operator = match op {
         BinaryOperator::Subtract => "i32.sub",
         BinaryOperator::Add => "i32.add",
-        BinaryOperator::Divide => "i32.div_s",
+        BinaryOperator::Divide => "i32.div_u",
         BinaryOperator::Multiply => "i32.mul",
         BinaryOperator::Equal => "i32.eq",
         BinaryOperator::BangEqual => "i32.ne",
-        _ => todo!(),
+        BinaryOperator::GreaterThan => "i32.gt_u",
+        BinaryOperator::GreaterThanEqual => "i32.ge_u",
+        BinaryOperator::LessThan => "i32.lt_u",
+        BinaryOperator::LessThanEqual => "i32.le_u"
     }.to_string();
 
     compiler.current.add_statement(Statement::String(operator));

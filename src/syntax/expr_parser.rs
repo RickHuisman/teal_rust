@@ -30,6 +30,10 @@ impl From<&TokenType> for Precedence {
         match token {
             TokenType::Equal => Precedence::Assign,
             TokenType::BangEqual | TokenType::EqualEqual => Precedence::Equality,
+            TokenType::LessThan
+            | TokenType::LessThanEqual
+            | TokenType::GreaterThan
+            | TokenType::GreaterThanEqual => Precedence::Comparison,
             TokenType::Plus | TokenType::Minus => Precedence::Term,
             TokenType::Star | TokenType::Slash => Precedence::Factor,
             TokenType::Bang => Precedence::Unary,

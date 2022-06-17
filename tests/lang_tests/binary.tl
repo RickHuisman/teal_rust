@@ -7,3 +7,8 @@ print 2 == 2; // expect: 1
 print 2 != 2; // expect: 0
 print 2 != 3; // expect: 1
 print 2 != 2; // expect: 0
+
+print 5 > 4; // expect: 1
+print 5 < 4; // expect: 0
+print 5 >= 5; // expect: 1
+print 5 <= 5; // expect: 1
