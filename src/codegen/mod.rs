@@ -18,17 +18,23 @@ pub fn generate_assembly(program: Program) -> String {
 
 fn generate_expr(compiler: &mut Compiler, expr: Expr) {
     match expr {
-        Expr::Block(_) => todo!(),
+        Expr::Block(expressions) => generate_block(compiler, expressions),
         Expr::Binary { left, op, right } => generate_binary(compiler, left, op, right),
         Expr::Unary { op, expr } => generate_unary(compiler, op, expr),
         Expr::LetAssign { ident, initializer } => generate_let_assign(compiler, ident, initializer),
         Expr::LetGet { ident } => generate_let_get(compiler, ident),
         Expr::LetSet { ident, expr } => generate_let_set(compiler, ident, expr),
         Expr::Print { value } => generate_print(compiler, value),
-        Expr::IfElse { .. } => todo!(),
+        Expr::IfElse { condition, then, else_ } => generate_if_else(compiler, condition, then, else_),
         Expr::Def { ident, decl } => generate_fun(compiler, ident, decl),
         Expr::Call { callee, args } => generate_call(compiler, callee, args),
         Expr::Literal(l) => generate_literal(compiler, l),
+    }
+}
+
+fn generate_block(compiler: &mut Compiler, expressions: Vec<Expr>) {
+    for e in expressions {
+        generate_expr(compiler, e);
     }
 }
 
@@ -89,6 +95,27 @@ fn generate_print(compiler: &mut Compiler, value: Box<Expr>) {
     let s = Statement::String("call $log".to_string());
 
     compiler.current.add_statement(s);
+}
+
+fn generate_if_else(compiler: &mut Compiler, condition: Box<Expr>, then: Box<Expr>, else_: Option<Box<Expr>>) {
+    generate_expr(compiler, *condition);
+
+    let if_ = r#"(if (then"#;
+
+    compiler.current.add_statement(Statement::String(if_.to_string()));
+
+    // Generate then.
+    generate_expr(compiler, *then);
+
+    let then_ = r#") (else"#;
+    compiler.current.add_statement(Statement::String(then_.to_string()));
+
+    // Generate else.
+    if else_.is_some() {
+        generate_expr(compiler, *else_.unwrap());
+    }
+
+    compiler.current.add_statement(Statement::String("))".to_string()));
 }
 
 fn generate_binary(compiler: &mut Compiler, left: Box<Expr>, op: BinaryOperator, right: Box<Expr>) {

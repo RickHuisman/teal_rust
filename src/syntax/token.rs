@@ -47,11 +47,9 @@ pub enum TokenType {
 
     Let,
     Print,
-    Do,
-    End,
     If,
     Else,
-    Def,
+    Fun,
     Identifier,
 
     EOF,
@@ -78,9 +76,11 @@ pub trait ToKeyword {
 impl ToKeyword for &str {
     fn to_keyword(self) -> TokenType {
         match self {
-            "fun" => TokenType::Def,
+            "fun" => TokenType::Fun,
             "let" => TokenType::Let,
             "print" => TokenType::Print,
+            "if" => TokenType::If,
+            "else" => TokenType::Else,
             _ => TokenType::Identifier,
         }
     }

@@ -34,8 +34,8 @@ pub enum Expr {
     },
     IfElse {
         condition: Box<Expr>,
-        then: BlockDecl,
-        else_: Option<BlockDecl>,
+        then: Box<Expr>,
+        else_: Option<Box<Expr>>,
     },
     Def {
         ident: Identifier,
@@ -107,8 +107,13 @@ impl Expr {
         Expr::Print { value: Box::new(value) }
     }
 
-    pub fn if_else(condition: Expr, then: BlockDecl, else_: Option<BlockDecl>) -> Self {
-        Expr::IfElse { condition: Box::new(condition), then, else_ }
+    pub fn if_else(condition: Expr, then: Expr, else_: Option<Expr>) -> Self {
+        let else_boxed = match else_ {
+            None => None,
+            Some(e) => Some(Box::new(e)),
+        };
+
+        Expr::IfElse { condition: Box::new(condition), then: Box::new(then), else_: else_boxed }
     }
 }
 

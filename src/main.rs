@@ -21,8 +21,15 @@ fn main() -> Result<()> {
     // print negate(3);
     // "#;
     let code = r#"
-    print 2 != 3;
-    print 3;
+    fun double(x) {
+        x * 2;
+    }
+
+    if 2 == 2 {
+        print double(4);
+    } else {
+        print 3;
+    }
     "#;
     run(code)
 }

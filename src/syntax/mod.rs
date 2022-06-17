@@ -16,7 +16,7 @@ pub fn parse<'a>(tokens: &'a mut Vec<Token<'a>>) -> ParseResult<Program> {
 
     let mut ast = vec![];
     while !parser.is_eof()? {
-        ast.push(parser.parse_top_level_expr()?);
+        ast.push(parser.declaration()?);
     }
 
     Ok(ast)

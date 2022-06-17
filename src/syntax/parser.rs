@@ -13,13 +13,13 @@ impl<'a> Parser<'a> {
         Parser { tokens }
     }
 
-    pub fn parse_top_level_expr(&mut self) -> ParseResult<Expr> {
+    pub fn declaration(&mut self) -> ParseResult<Expr> {
         match self.peek_type()? {
             TokenType::Let => self.parse_let(),
-            TokenType::Def => self.parse_def(),
-            TokenType::Do => self.parse_do(),
+            TokenType::Fun => self.parse_fun(),
             TokenType::Print => self.parse_print(),
             TokenType::If => self.parse_if(),
+            TokenType::LeftBrace => self.parse_block(),
             _ => self.parse_expr_statement(),
         }
     }
@@ -40,8 +40,8 @@ impl<'a> Parser<'a> {
         Ok(Expr::let_assign(ident, initializer))
     }
 
-    fn parse_def(&mut self) -> ParseResult<Expr> {
-        self.expect(TokenType::Def)?;
+    fn parse_fun(&mut self) -> ParseResult<Expr> {
+        self.expect(TokenType::Fun)?;
 
         let ident = self.parse_identifier()?;
 
@@ -57,12 +57,6 @@ impl<'a> Parser<'a> {
         Ok(Expr::def(ident, fun_decl))
     }
 
-    fn parse_do(&mut self) -> ParseResult<Expr> {
-        self.expect(TokenType::Do)?;
-        self.match_(TokenType::Semicolon)?;
-        Ok(Expr::Block(self.block()?))
-    }
-
     fn parse_print(&mut self) -> ParseResult<Expr> {
         self.expect(TokenType::Print)?;
         let expr = self.parse_expr_statement()?;
@@ -70,37 +64,32 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_if(&mut self) -> ParseResult<Expr> {
-        // Consume "if".
         self.expect(TokenType::If)?;
 
-        let cond = self.expression()?;
+        let condition = self.expression()?;
+        let then = self.declaration()?;
 
-        self.expect(TokenType::Do)?;
-        self.match_(TokenType::Semicolon)?;
-
-        // Then
-        let mut then = vec![];
-        loop {
-            if self.match_(TokenType::End)? {
-                break;
-            }
-            if self.check(TokenType::Else)? {
-                break;
-            }
-
-            then.push(self.parse_top_level_expr()?);
-        }
-
-        let else_clause = if self.match_(TokenType::Else)? {
-            self.match_(TokenType::Semicolon)?;
-            Some(self.block()?)
+        let else_ = if self.match_(TokenType::Else)? {
+            Some(self.declaration()?)
         } else {
             None
         };
 
-        self.match_(TokenType::Semicolon)?;
+        Ok(Expr::if_else(condition, then, else_))
+    }
 
-        Ok(Expr::if_else(cond, then, else_clause))
+    fn parse_block(&mut self) -> ParseResult<Expr> {
+        self.expect(TokenType::LeftBrace)?;
+
+        let mut expressions = vec![];
+
+        while !self.check(TokenType::RightBrace)? && !self.check(TokenType::EOF)? {
+            expressions.push(self.declaration()?);
+        }
+
+        self.expect(TokenType::RightBrace)?;
+
+        Ok(Expr::Block(expressions))
     }
 
     pub fn parse_args(&mut self) -> ParseResult<Vec<Identifier>> {
@@ -127,9 +116,11 @@ impl<'a> Parser<'a> {
 
     fn block(&mut self) -> ParseResult<BlockDecl> {
         let mut exprs = vec![];
-        while !self.match_(TokenType::RightBrace)? && !self.match_(TokenType::End)? {
-            exprs.push(self.parse_top_level_expr()?);
+        while !self.check(TokenType::RightBrace)? && !self.check(TokenType::EOF)? {
+            exprs.push(self.declaration()?);
         }
+
+        self.expect(TokenType::RightBrace)?;
 
         Ok(exprs)
     }
