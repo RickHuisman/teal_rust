@@ -1,2 +1,2 @@
-puts 2 + 3; // expect: 5
-puts 10; // expect: 10
+print 2 + 3; // expect: 5
+print 10; // expect: 10

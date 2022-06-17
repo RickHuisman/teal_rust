@@ -12,12 +12,17 @@ use crate::codegen::generate_assembly;
 use crate::syntax::{lex, parse};
 
 fn main() -> Result<()> {
+    // let code = r#"
+    // fun negate(x) {
+    //     x = x * 2;
+    //     -x;
+    // }
+    //
+    // print negate(3);
+    // "#;
     let code = r#"
-    fun negate(x) {
-        -x;
-    }
-
-    puts negate(3);
+    print 2 != 3;
+    print 3;
     "#;
     run(code)
 }

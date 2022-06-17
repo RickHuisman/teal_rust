@@ -23,7 +23,7 @@ impl Module {
         let mut prefix = "(module\n".to_string();
 
         // Print function.
-        prefix += "(import \"env\" \"log\" (func $log (param f64)))\n";
+        prefix += "(import \"env\" \"log\" (func $log (param i32)))\n";
 
         // Globals.
         for g in self.globals {
@@ -59,7 +59,7 @@ pub struct Global {
 
 impl Global {
     pub fn to_wat(self) -> String {
-        format!("(global ${} (mut f64) (f64.const 0))\n", self.name)
+        format!("(global ${} (mut i32) (i32.const 0))\n", self.name)
     }
 }
 
@@ -67,7 +67,7 @@ pub type FunctionName = String;
 
 #[derive(Clone)]
 pub enum Statement {
-    Const(f64),
+    Const(i32),
     Call(FunctionName),
     String(String),
 }
@@ -76,7 +76,7 @@ impl Statement {
     fn to_wat(self) -> String {
         return match self {
             Statement::Const(c) => {
-                format!("f64.const {}\n", c)
+                format!("i32.const {}\n", c)
             }
             Statement::String(s) => {
                 format!("{}\n", s)
@@ -129,18 +129,18 @@ impl Function {
 
         // Params.
         for p in self.params {
-            prefix += &format!("(param ${} f64) ", p);
+            prefix += &format!("(param ${} i32) ", p);
         }
         prefix += "\n";
 
         // Return type.
         if self.return_type.is_some() {
-            prefix += "(result f64)\n";
+            prefix += "(result i32)\n";
         }
 
         // Local declarations.
         for l in self.locals {
-            prefix += &format!("(local ${} f64)\n", l);
+            prefix += &format!("(local ${} i32)\n", l);
         }
 
         // Statements.

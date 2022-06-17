@@ -47,7 +47,7 @@ pub fn run(source: &str) -> Result<()> {
     Ok(())
 }
 
-fn log(n: f64) {
+fn log(n: i32) {
     println!("{}", n);
 }
 
@@ -70,10 +70,9 @@ pub fn run_with_output(source: &str) -> Result<Vec<String>> {
 
     let log_func = Function::new_native_with_env(&store, Env { output: shared_counter2.clone() }, log);
 
-    fn log(env: &Env, n: f64) {
+    fn log(env: &Env, n: i32) {
         let mut output_ref = env.output.lock().unwrap();
         output_ref.push(n.to_string());
-        // println!("{}", n);
     }
 
     let import_object = imports! {

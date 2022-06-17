@@ -46,7 +46,7 @@ pub enum TokenType {
     False,
 
     Let,
-    Puts,
+    Print,
     Do,
     End,
     If,
@@ -80,7 +80,7 @@ impl ToKeyword for &str {
         match self {
             "fun" => TokenType::Def,
             "let" => TokenType::Let,
-            "puts" => TokenType::Puts,
+            "print" => TokenType::Print,
             _ => TokenType::Identifier,
         }
     }

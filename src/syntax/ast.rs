@@ -29,7 +29,7 @@ pub enum Expr {
         ident: Identifier,
         expr: Box<Expr>,
     },
-    Puts {
+    Print {
         value: Box<Expr>,
     },
     IfElse {
@@ -87,7 +87,7 @@ impl Expr {
         Expr::Call { callee: Box::new(callee), args }
     }
 
-    pub fn number(n: f64) -> Expr {
+    pub fn number(n: i32) -> Expr {
         Expr::Literal(LiteralExpr::Number(n))
     }
 
@@ -103,8 +103,8 @@ impl Expr {
         Expr::Literal(LiteralExpr::False)
     }
 
-    pub fn puts(value: Expr) -> Self {
-        Expr::Puts { value: Box::new(value) }
+    pub fn print(value: Expr) -> Self {
+        Expr::Print { value: Box::new(value) }
     }
 
     pub fn if_else(condition: Expr, then: BlockDecl, else_: Option<BlockDecl>) -> Self {
@@ -114,7 +114,7 @@ impl Expr {
 
 #[derive(PartialEq, Debug)]
 pub enum LiteralExpr {
-    Number(f64),
+    Number(i32),
     String(String),
     True,
     False,

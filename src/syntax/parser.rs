@@ -18,7 +18,7 @@ impl<'a> Parser<'a> {
             TokenType::Let => self.parse_let(),
             TokenType::Def => self.parse_def(),
             TokenType::Do => self.parse_do(),
-            TokenType::Puts => self.parse_puts(),
+            TokenType::Print => self.parse_print(),
             TokenType::If => self.parse_if(),
             _ => self.parse_expr_statement(),
         }
@@ -33,7 +33,7 @@ impl<'a> Parser<'a> {
             self.parse_expr_statement()?
         } else {
             self.expect(TokenType::Semicolon)?;
-            Expr::number(4.0) // TODO: NIL.
+            Expr::number(4) // TODO: NIL.
             // Expr::Literal(LiteralExpr::Nil)
         };
 
@@ -63,10 +63,10 @@ impl<'a> Parser<'a> {
         Ok(Expr::Block(self.block()?))
     }
 
-    fn parse_puts(&mut self) -> ParseResult<Expr> {
-        self.expect(TokenType::Puts)?;
+    fn parse_print(&mut self) -> ParseResult<Expr> {
+        self.expect(TokenType::Print)?;
         let expr = self.parse_expr_statement()?;
-        Ok(Expr::puts(expr))
+        Ok(Expr::print(expr))
     }
 
     fn parse_if(&mut self) -> ParseResult<Expr> {

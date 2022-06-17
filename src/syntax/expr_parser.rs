@@ -86,7 +86,7 @@ fn parse_infix(parser: &mut Parser, left: Expr) -> ParseResult<Expr> {
 fn parse_primary(parser: &mut Parser) -> ParseResult<Expr> {
     let token = parser.consume()?;
     match token.token_type {
-        TokenType::Number => Ok(Expr::number(token.source.parse::<f64>().unwrap())),
+        TokenType::Number => Ok(Expr::number(token.source.parse::<i32>().unwrap())),
         TokenType::String => Ok(Expr::string(token.source.to_string())),
         TokenType::True => Ok(Expr::true_()),
         TokenType::False => Ok(Expr::false_()),

@@ -24,7 +24,7 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
         Expr::LetAssign { ident, initializer } => generate_let_assign(compiler, ident, initializer),
         Expr::LetGet { ident } => generate_let_get(compiler, ident),
         Expr::LetSet { ident, expr } => generate_let_set(compiler, ident, expr),
-        Expr::Puts { value } => generate_puts(compiler, value),
+        Expr::Print { value } => generate_print(compiler, value),
         Expr::IfElse { .. } => todo!(),
         Expr::Def { ident, decl } => generate_fun(compiler, ident, decl),
         Expr::Call { callee, args } => generate_call(compiler, callee, args),
@@ -83,7 +83,7 @@ fn generate_let_set(compiler: &mut Compiler, ident: Identifier, expr: Box<Expr>)
     compiler.current.add_statement(s);
 }
 
-fn generate_puts(compiler: &mut Compiler, value: Box<Expr>) {
+fn generate_print(compiler: &mut Compiler, value: Box<Expr>) {
     generate_expr(compiler, *value);
 
     let s = Statement::String("call $log".to_string());
@@ -100,10 +100,12 @@ fn generate_binary(compiler: &mut Compiler, left: Box<Expr>, op: BinaryOperator,
 
 fn generate_binary_op(compiler: &mut Compiler, op: BinaryOperator) {
     let operator = match op {
-        BinaryOperator::Subtract => "f64.sub",
-        BinaryOperator::Add => "f64.add",
-        BinaryOperator::Divide => "f64.div",
-        BinaryOperator::Multiply => "f64.mul",
+        BinaryOperator::Subtract => "i32.sub",
+        BinaryOperator::Add => "i32.add",
+        BinaryOperator::Divide => "i32.div_s",
+        BinaryOperator::Multiply => "i32.mul",
+        BinaryOperator::Equal => "i32.eq",
+        BinaryOperator::BangEqual => "i32.ne",
         _ => todo!(),
     }.to_string();
 
@@ -115,7 +117,7 @@ fn generate_unary(compiler: &mut Compiler, op: UnaryOperator, expr: Box<Expr>) {
 
     match op {
         UnaryOperator::Negate => {
-            compiler.current.add_statement(Statement::String("f64.neg".to_string()));
+            compiler.current.add_statement(Statement::String("i32.neg".to_string()));
         },
         _ => todo!(),
     }
@@ -124,7 +126,7 @@ fn generate_unary(compiler: &mut Compiler, op: UnaryOperator, expr: Box<Expr>) {
 fn generate_fun(compiler: &mut Compiler, ident: Identifier, decl: FunDecl) {
     let main_clone = compiler.current.clone();
 
-    let f = Function::new(ident, decl.args, Some(ValueType::F64), vec![], FunctionType::Function);
+    let f = Function::new(ident, decl.args, Some(ValueType::I32), vec![], FunctionType::Function);
     compiler.current = f;
 
     // Compile function expressions.
