@@ -11,13 +11,11 @@ use crate::syntax::{lex, parse};
 
 fn main() -> Result<()> {
     let code = r#"
-    fun sum(a, b) {
-        f = 4;
-        a + b + f;
+    fun negate(x) {
+        -x;
     }
 
-    let f = 2;
-    sum(f, 5);
+    negate(3);
     "#;
     run(code)
 }
@@ -40,8 +38,8 @@ fn run(source: &str) -> Result<()> {
     let import_object = imports! {};
     let instance = Instance::new(&module, &import_object)?;
 
-    let init = instance.exports.get_function("init")?;
-    let result = init.call(&[])?;
+    let main = instance.exports.get_function("main")?;
+    let result = main.call(&[])?;
     println!("{:?}", result);
 
     Ok(())

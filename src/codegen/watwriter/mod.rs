@@ -32,8 +32,8 @@ impl Module {
             prefix += &f.to_wat();
         }
 
-        // Export init function.
-        prefix += &format!("(export \"init\" (func $init))\n");
+        // Export main function.
+        prefix += &format!("(export \"main\" (func $main))\n");
 
         prefix + ")"
     }

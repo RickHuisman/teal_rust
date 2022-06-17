@@ -1,7 +1,7 @@
 mod watwriter;
 
 use crate::codegen::watwriter::{Function, FunctionType, Global, Module, Statement, ValueType};
-use crate::syntax::ast::{BinaryOperator, Expr, Identifier, LiteralExpr, Program};
+use crate::syntax::ast::{BinaryOperator, Expr, FunDecl, Identifier, LiteralExpr, Program, UnaryOperator};
 
 pub fn generate_assembly(program: Program) -> String {
     let mut compiler = Compiler::new();
@@ -10,7 +10,7 @@ pub fn generate_assembly(program: Program) -> String {
         generate_expr(&mut compiler, expr);
     }
 
-    // Add init function.
+    // Add main function.
     compiler.module.add_function(compiler.current.clone());
 
     compiler.to_wat()
@@ -19,101 +19,75 @@ pub fn generate_assembly(program: Program) -> String {
 fn generate_expr(compiler: &mut Compiler, expr: Expr) {
     match expr {
         Expr::Block(_) => todo!(),
-        Expr::Binary { left, op, right } => {
-            generate_expr(compiler, *left);
-            generate_expr(compiler, *right);
-
-            generate_binary_op(compiler, op);
-        }
-        Expr::Unary { .. } => todo!(),
-        Expr::LetAssign { ident, initializer } => {
-            let global = Global {
-                name: ident.clone(),
-                mutable: true,
-                value_type: ValueType::F64,
-            };
-
-            compiler.module.add_global(global);
-
-            // Generate initializer.
-            generate_expr(compiler, *initializer);
-
-            if compiler.current.function_type == FunctionType::Script {
-                // Global var.
-                let s = Statement::String(format!("global.set ${}", ident.clone()));
-                compiler.current.add_statement(s);
-            } else {
-                // Local var.
-                compiler.current.add_local(ident.clone());
-
-                let s = Statement::String(format!("local.set ${}", ident.clone()));
-                compiler.current.add_statement(s);
-            };
-        }
-        Expr::LetGet { ident } => {
-            let s = if compiler.is_local(&ident) {
-                // Local var.
-                Statement::String(format!("local.get ${}", ident.clone()))
-            } else {
-                // Global var.
-                Statement::String(format!("global.get ${}", ident.clone()))
-            };
-
-            compiler.current.add_statement(s);
-        }
-        Expr::LetSet { ident, expr } => {
-            generate_expr(compiler, *expr);
-
-            let s = if compiler.is_local(&ident) {
-                // Local var.
-                Statement::String(format!("local.set ${}", ident.clone()))
-            } else {
-                // Global var.
-                Statement::String(format!("global.set ${}", ident.clone()))
-            };
-
-            compiler.current.add_statement(s);
-        }
+        Expr::Binary { left, op, right } => generate_binary(compiler, left, op, right),
+        Expr::Unary { op, expr } => generate_unary(compiler, op, expr),
+        Expr::LetAssign { ident, initializer } => generate_let_assign(compiler, ident, initializer),
+        Expr::LetGet { ident } => generate_let_get(compiler, ident),
+        Expr::LetSet { ident, expr } => generate_let_set(compiler, ident, expr),
         Expr::Puts { .. } => todo!(),
         Expr::IfElse { .. } => todo!(),
-        Expr::Def { ident, decl } => {
-            let init_clone = compiler.current.clone();
-
-            let f = Function::new(ident, decl.args, Some(ValueType::F64), vec![], FunctionType::Function);
-            compiler.current = f;
-
-            // Compile function expressions.
-            for expr in decl.body {
-                generate_expr(compiler, expr);
-            }
-
-            compiler.module.add_function(compiler.current.clone());
-
-            compiler.current = init_clone;
-        }
-        Expr::Call { callee, args } => {
-            // Generate args.
-            for a in args {
-                generate_expr(compiler, a);
-            }
-
-            let fun_name = match *callee {
-                Expr::LetGet { ident } => ident,
-                _ => todo!()
-            };
-
-            let call = Statement::Call(fun_name);
-            compiler.current.add_statement(call);
-        }
-        Expr::Literal(l) => {
-            match l {
-                LiteralExpr::Number(n) => {
-                    compiler.current.add_statement(Statement::Const(n));
-                }
-                _ => todo!()
-            }
-        }
+        Expr::Def { ident, decl } => generate_fun(compiler, ident, decl),
+        Expr::Call { callee, args } => generate_call(compiler, callee, args),
+        Expr::Literal(l) => generate_literal(compiler, l),
     }
+}
+
+fn generate_let_assign(compiler: &mut Compiler, ident: Identifier, initializer: Box<Expr>) {
+    let global = Global {
+        name: ident.clone(),
+        mutable: true,
+        value_type: ValueType::F64,
+    };
+
+    compiler.module.add_global(global);
+
+    // Generate initializer.
+    generate_expr(compiler, *initializer);
+
+    if compiler.current.function_type == FunctionType::Script {
+        // Global var.
+        let s = Statement::String(format!("global.set ${}", ident.clone()));
+        compiler.current.add_statement(s);
+    } else {
+        // Local var.
+        compiler.current.add_local(ident.clone());
+
+        let s = Statement::String(format!("local.set ${}", ident.clone()));
+        compiler.current.add_statement(s);
+    };
+}
+
+fn generate_let_get(compiler: &mut Compiler, ident: Identifier) {
+    let s = if compiler.is_local(&ident) {
+        // Local var.
+        Statement::String(format!("local.get ${}", ident.clone()))
+    } else {
+        // Global var.
+        Statement::String(format!("global.get ${}", ident.clone()))
+    };
+
+    compiler.current.add_statement(s);
+}
+
+fn generate_let_set(compiler: &mut Compiler, ident: Identifier, expr: Box<Expr>) {
+    generate_expr(compiler, *expr);
+
+    let s = if compiler.is_local(&ident) {
+        // Local var.
+        Statement::String(format!("local.set ${}", ident.clone()))
+    } else {
+        // Global var.
+        Statement::String(format!("global.set ${}", ident.clone()))
+    };
+
+    compiler.current.add_statement(s);
+}
+
+fn generate_binary(compiler: &mut Compiler, left: Box<Expr>, op: BinaryOperator, right: Box<Expr>) {
+    generate_expr(compiler, *left);
+    generate_expr(compiler, *right);
+
+    generate_binary_op(compiler, op);
 }
 
 fn generate_binary_op(compiler: &mut Compiler, op: BinaryOperator) {
@@ -128,6 +102,57 @@ fn generate_binary_op(compiler: &mut Compiler, op: BinaryOperator) {
     compiler.current.add_statement(Statement::String(operator));
 }
 
+fn generate_unary(compiler: &mut Compiler, op: UnaryOperator, expr: Box<Expr>) {
+    generate_expr(compiler, *expr);
+
+    match op {
+        UnaryOperator::Negate => {
+            compiler.current.add_statement(Statement::String("f64.neg".to_string()));
+        },
+        _ => todo!(),
+    }
+}
+
+fn generate_fun(compiler: &mut Compiler, ident: Identifier, decl: FunDecl) {
+    let main_clone = compiler.current.clone();
+
+    let f = Function::new(ident, decl.args, Some(ValueType::F64), vec![], FunctionType::Function);
+    compiler.current = f;
+
+    // Compile function expressions.
+    for expr in decl.body {
+        generate_expr(compiler, expr);
+    }
+
+    compiler.module.add_function(compiler.current.clone());
+
+    compiler.current = main_clone;
+}
+
+fn generate_call(compiler: &mut Compiler, callee: Box<Expr>, args: Vec<Expr>) {
+    // Generate args.
+    for a in args {
+        generate_expr(compiler, a);
+    }
+
+    let fun_name = match *callee {
+        Expr::LetGet { ident } => ident,
+        _ => todo!()
+    };
+
+    let call = Statement::Call(fun_name);
+    compiler.current.add_statement(call);
+}
+
+fn generate_literal(compiler: &mut Compiler, l: LiteralExpr) {
+    match l {
+        LiteralExpr::Number(n) => {
+            compiler.current.add_statement(Statement::Const(n));
+        }
+        _ => todo!()
+    }
+}
+
 #[derive(Clone)]
 struct Compiler {
     module: Module,
@@ -137,11 +162,11 @@ struct Compiler {
 
 impl Compiler {
     pub fn new() -> Self {
-        let init_fun = Function::new("init".to_string(), vec![], Some(ValueType::F64), vec![], FunctionType::Script);
+        let main_fun = Function::new("main".to_string(), vec![], Some(ValueType::F64), vec![], FunctionType::Script);
         Self {
             module: Module::new(),
             globals: vec![],
-            current: init_fun,
+            current: main_fun,
         }
     }
 
