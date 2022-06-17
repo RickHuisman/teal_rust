@@ -170,7 +170,7 @@ struct Compiler {
 
 impl Compiler {
     pub fn new() -> Self {
-        let main_fun = Function::new("main".to_string(), vec![], Some(ValueType::F64), vec![], FunctionType::Script);
+        let main_fun = Function::new("main".to_string(), vec![], None, vec![], FunctionType::Script);
         Self {
             module: Module::new(),
             globals: vec![],
