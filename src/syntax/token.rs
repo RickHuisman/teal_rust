@@ -81,6 +81,8 @@ impl ToKeyword for &str {
             "print" => TokenType::Print,
             "if" => TokenType::If,
             "else" => TokenType::Else,
+            "true" => TokenType::True,
+            "false" => TokenType::False,
             _ => TokenType::Identifier,
         }
     }

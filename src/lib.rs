@@ -1,10 +1,9 @@
 mod syntax;
 mod codegen;
 
-use std::io::{Cursor, Write};
 use std::sync::{Arc, Mutex};
 use anyhow::Result;
-use wasmer::{Function, Instance, Store};
+use wasmer::{Function, ImportObject, Instance, Memory, MemoryType, MemoryView, Pages, Store};
 use wasmer::Module;
 use wasmer::imports;
 use wasmer::WasmerEnv;
@@ -31,20 +30,56 @@ pub fn run(source: &str) -> Result<()> {
     let store = Store::default();
     let module = Module::new(&store, &module_wat)?;
 
+    // let memory = Memory::new(&store, MemoryType::new(1, None, false)).unwrap();
     let log_func = Function::new_native(&store, log);
 
     let import_object = imports! {
         "env" => {
-            "log" => log_func
+            "log" => log_func,
+            // "mem" => memory.clone(),
         }
     };
+
+    // let import_object = get_import_object(store);
 
     let instance = Instance::new(&module, &import_object)?;
 
     let main = instance.exports.get_function("main")?;
     main.call(&[])?;
 
+    // println!("{:?}", memory);
+
+    // Without synchronization.
+    // let view: MemoryView<u8> = memory.view();
+    // for byte in view[0x1000 .. 0x1010].iter().map(Cell::get) {
+    //     println!("byte: {}", byte);
+    // }
+
+// With synchronization.
+//     let atomic_view = view.atomically();
+//     for byte in atomic_view[0x1000 .. 0x1010].iter().map(|atom| atom.load(Ordering::SeqCst)) {
+//         println!("byte: {}", byte);
+//     }
+
+    let memory = instance.exports.get_memory("memory")?;
+
+    // println!("Querying memory size... {:?}", memory.size());
+    // assert_eq!(memory.size().bytes(), Bytes::from(65536 as usize));
+    // assert_eq!(memory.data_size(), 65536);
+
     Ok(())
+}
+
+fn get_import_object(store: Store) -> ImportObject {
+    let memory = Memory::new(&store, MemoryType::new(1, None, false)).unwrap();
+    let log_func = Function::new_native(&store, log);
+
+    return imports! {
+        "env" => {
+            "log" => log_func,
+            "mem" => memory,
+        }
+    }
 }
 
 fn log(n: i32) {

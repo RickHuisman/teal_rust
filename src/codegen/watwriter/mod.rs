@@ -3,16 +3,21 @@ use crate::syntax::ast::Identifier;
 #[derive(Clone)]
 pub struct Module {
     pub globals: Vec<Global>,
+    pub data: Vec<String>,
     pub functions: Vec<Function>,
 }
 
 impl Module {
     pub fn new() -> Self {
-        Self { globals: vec![], functions: vec![] }
+        Self { globals: vec![], data: vec![], functions: vec![] }
     }
 
     pub fn add_global(&mut self, global: Global) {
         self.globals.push(global);
+    }
+
+    pub fn add_data(&mut self, str: String) {
+        self.data.push(str);
     }
 
     pub fn add_function(&mut self, fun: Function) {
@@ -25,9 +30,17 @@ impl Module {
         // Print function.
         prefix += "(import \"env\" \"log\" (func $log (param i32)))\n";
 
+        // Memory.
+        prefix += "(memory $mem 1)\n";
+
         // Globals.
         for g in self.globals {
             prefix += &g.to_wat();
+        }
+
+        // Data.
+        for d in self.data {
+            prefix += &format!("(data (i32.const 0) \"{}\")\n", d);
         }
 
         // Functions.
@@ -37,6 +50,9 @@ impl Module {
 
         // Export main function.
         prefix += &format!("(export \"main\" (func $main))\n");
+
+        // Export memory.
+        prefix += &format!("(export \"memory\" (memory $mem))\n");
 
         prefix + ")"
     }
@@ -164,9 +180,9 @@ mod tests {
         assert_eq!(m.to_wat(), "(module)");
     }
 
-    #[test]
-    fn fun_to_wat() {
-        let f = Function::new_empty("foobar");
-        assert_eq!(f.to_wat(), "(func $foobar)");
-    }
+    // #[test]
+    // fn fun_to_wat() {
+    //     let f = Function::new_empty("foobar");
+    //     assert_eq!(f.to_wat(), "(func $foobar)");
+    // }
 }

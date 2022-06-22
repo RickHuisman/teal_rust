@@ -43,8 +43,9 @@ impl<'a> Parser<'a> {
     fn parse_fun(&mut self) -> ParseResult<Expr> {
         self.expect(TokenType::Fun)?;
 
-        let ident = self.parse_identifier()?;
+        let name = self.parse_identifier()?;
 
+        // Parameters.
         self.expect(TokenType::LeftParen)?;
         let args = self.parse_args()?;
         self.expect(TokenType::RightParen)?;
@@ -53,8 +54,7 @@ impl<'a> Parser<'a> {
 
         let body = self.block()?;
 
-        let fun_decl = FunDecl::new(args, body);
-        Ok(Expr::def(ident, fun_decl))
+        Ok(Expr::fun(name, args, body))
     }
 
     fn parse_print(&mut self) -> ParseResult<Expr> {

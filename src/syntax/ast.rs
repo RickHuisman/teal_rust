@@ -37,9 +37,10 @@ pub enum Expr {
         then: Box<Expr>,
         else_: Option<Box<Expr>>,
     },
-    Def {
+    Fun {
         ident: Identifier,
-        decl: FunDecl,
+        params: Vec<Identifier>,
+        body: BlockDecl,
     },
     Call {
         callee: Box<Expr>,
@@ -79,8 +80,8 @@ impl Expr {
         }
     }
 
-    pub fn def(ident: Identifier, decl: FunDecl) -> Self {
-        Expr::Def { ident, decl }
+    pub fn fun(ident: Identifier, params: Vec<Identifier>, body: BlockDecl) -> Self {
+        Expr::Fun { ident, params, body }
     }
 
     pub fn call(callee: Expr, args: Vec<Expr>) -> Self {
@@ -171,17 +172,5 @@ impl UnaryOperator {
             TokenType::Bang => UnaryOperator::Not,
             _ => return Err(ParserError::ExpectedUnaryOperator(token_type.clone())),
         })
-    }
-}
-
-#[derive(PartialEq, Debug)]
-pub struct FunDecl {
-    pub args: Vec<Identifier>,
-    pub body: BlockDecl,
-}
-
-impl FunDecl {
-    pub fn new(args: Vec<Identifier>, body: BlockDecl) -> Self {
-        FunDecl { args, body }
     }
 }

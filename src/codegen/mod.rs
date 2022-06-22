@@ -1,7 +1,7 @@
 mod watwriter;
 
 use crate::codegen::watwriter::{Function, FunctionType, Global, Module, Statement, ValueType};
-use crate::syntax::ast::{BinaryOperator, Expr, FunDecl, Identifier, LiteralExpr, Program, UnaryOperator};
+use crate::syntax::ast::{BinaryOperator, BlockDecl, Expr, Identifier, LiteralExpr, Program, UnaryOperator};
 
 pub fn generate_assembly(program: Program) -> String {
     let mut compiler = Compiler::new();
@@ -26,7 +26,7 @@ fn generate_expr(compiler: &mut Compiler, expr: Expr) {
         Expr::LetSet { ident, expr } => generate_let_set(compiler, ident, expr),
         Expr::Print { value } => generate_print(compiler, value),
         Expr::IfElse { condition, then, else_ } => generate_if_else(compiler, condition, then, else_),
-        Expr::Def { ident, decl } => generate_fun(compiler, ident, decl),
+        Expr::Fun { ident, params, body, } => generate_fun(compiler, ident, params, body),
         Expr::Call { callee, args } => generate_call(compiler, callee, args),
         Expr::Literal(l) => generate_literal(compiler, l),
     }
@@ -149,18 +149,18 @@ fn generate_unary(compiler: &mut Compiler, op: UnaryOperator, expr: Box<Expr>) {
         UnaryOperator::Negate => {
             compiler.current.add_statement(Statement::String("i32.neg".to_string()));
         },
-        _ => todo!(),
+        UnaryOperator::Not => todo!()
     }
 }
 
-fn generate_fun(compiler: &mut Compiler, ident: Identifier, decl: FunDecl) {
+fn generate_fun(compiler: &mut Compiler, ident: Identifier, params: Vec<Identifier>, body: BlockDecl) {
     let main_clone = compiler.current.clone();
 
-    let f = Function::new(ident, decl.args, Some(ValueType::I32), vec![], FunctionType::Function);
+    let f = Function::new(ident, params, Some(ValueType::I32), vec![], FunctionType::Function);
     compiler.current = f;
 
     // Compile function expressions.
-    for expr in decl.body {
+    for expr in body {
         generate_expr(compiler, expr);
     }
 
@@ -185,18 +185,19 @@ fn generate_call(compiler: &mut Compiler, callee: Box<Expr>, args: Vec<Expr>) {
 }
 
 fn generate_literal(compiler: &mut Compiler, l: LiteralExpr) {
-    match l {
-        LiteralExpr::Number(n) => {
-            compiler.current.add_statement(Statement::Const(n));
-        }
-        _ => todo!()
-    }
+    let statement = match l {
+        LiteralExpr::Number(n) => Statement::Const(n),
+        LiteralExpr::String(str) => Statement::String("i32.const 0".to_string()),
+        LiteralExpr::True => Statement::Const(1),
+        LiteralExpr::False => Statement::Const(0),
+    };
+
+    compiler.current.add_statement(statement);
 }
 
 #[derive(Clone)]
 struct Compiler {
     module: Module,
-    globals: Vec<Identifier>,
     current: Function,
 }
 
@@ -205,7 +206,6 @@ impl Compiler {
         let main_fun = Function::new("main".to_string(), vec![], None, vec![], FunctionType::Script);
         Self {
             module: Module::new(),
-            globals: vec![],
             current: main_fun,
         }
     }
@@ -218,7 +218,7 @@ impl Compiler {
         self.current.locals.contains(local)
     }
 
-    pub fn to_wat(mut self) -> String {
+    pub fn to_wat(self) -> String {
         self.module.to_wat()
     }
 }
